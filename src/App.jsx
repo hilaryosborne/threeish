@@ -18,12 +18,6 @@ const App = () => {
           onClick={() => {
             console.log('CLICKED');
           }}
-          onHover={() => {
-            console.log('I AM THE CHOSEN ONE');
-          }}
-          onBlur={() => {
-            console.log('I AM NOT THE CHOSEN ONE');
-          }}
         />
         <SimpleBox x={0.3} />
         <SimpleBox x={0.6} />

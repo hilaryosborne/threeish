@@ -23,7 +23,6 @@ const CoreProvider = ({ children }) => {
     }),
     [events, renderer, setRenderer, scene, setScene, camera, setCamera, highlighted, setHighlighted],
   );
-  // console.log(highlighted);
   const loop = () => {
     requestAnimationFrame(loop);
     if (!scene || !camera || !renderer) return;

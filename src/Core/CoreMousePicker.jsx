@@ -6,9 +6,7 @@ import { CoreContext } from '../CoreProvider';
 export const FocusedObjectState = {
   current: [],
   set: function (GameObjects) {
-    if (!this.changed(GameObjects)) {
-      return undefined;
-    }
+    if (!this.changed(GameObjects)) return undefined;
     this.current = GameObjects;
     this.observable.next(GameObjects);
   },
@@ -33,10 +31,70 @@ export const useFocusedGameObjects = () => {
   return GameObjects;
 };
 
+export const ClickedObjectState = {
+  current: [],
+  set: function (GameObjects) {
+    if (!this.changed(GameObjects)) return undefined;
+    this.current = GameObjects;
+    this.observable.next(GameObjects);
+  },
+  changed: function (GameObjects) {
+    const _current = this.current.map((gameObject) => gameObject.object.uuid);
+    const _next = GameObjects.map((gameObject) => gameObject.object.uuid);
+    return JSON.stringify(_current) !== JSON.stringify(_next);
+  },
+  subscribe: function (args) {
+    return this.observable.subscribe(args);
+  },
+  observable: new Subject(),
+};
+
+export const useClickedGameObjects = () => {
+  const [GameObjects, setGameObjects] = useState([]);
+  useEffect(() => {
+    ClickedObjectState.subscribe((NextGameObjects) => {
+      setGameObjects(NextGameObjects);
+    });
+  }, []);
+  return GameObjects;
+};
+
 const CoreMousePicker = () => {
   const { camera, scene, events } = useContext(CoreContext);
   const raycaster = useMemo(() => new Raycaster(), []);
   const mouse = useRef(new Vector2());
+  const onMouseDown = useCallback(
+    (e) => {
+      if (!scene || !camera) return;
+      // update the picking ray with the camera and mouse position
+      raycaster.setFromCamera(mouse.current, camera);
+      // calculate objects intersecting the picking ray var intersects =
+      const intersects = raycaster.intersectObjects(scene.children);
+      // Update the clicked object state
+      ClickedObjectState.set(intersects);
+    },
+    [scene, camera, raycaster],
+  );
+  useEffect(() => {
+    window.addEventListener('mousedown', onMouseDown, false);
+    return () => {
+      window.removeEventListener('mousedown', onMouseDown, false);
+    };
+  }, [onMouseDown]);
+  const onMouseUp = useCallback(
+    (e) => {
+      if (!scene || !camera) return;
+      // Update the clicked object state
+      ClickedObjectState.set([]);
+    },
+    [scene, camera],
+  );
+  useEffect(() => {
+    window.addEventListener('mouseup', onMouseUp, false);
+    return () => {
+      window.removeEventListener('mouseup', onMouseUp, false);
+    };
+  }, [onMouseUp]);
   const onMouseMove = useCallback((e) => {
     mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
     mouse.current.y = -(e.clientY / window.innerHeight) * 2 + 1;
